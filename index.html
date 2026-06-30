@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>지구방위대 - 외계인 침공 생존 시뮬레이터</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts (Orbitron & Noto Sans KR) -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Orbitron:wght@400;600;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #030712;
+      color: #f3f4f6;
+    }
+    .font-orbitron {
+      font-family: 'Orbitron', sans-serif;
+    }
+    .font-mono {
+      font-family: 'Fira Code', 'Courier New', monospace;
+    }
+    /* Neon Glow Effects */
+    .neon-glow-green {
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.35);
+    }
+    .neon-border-green {
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    .neon-text-green {
+      text-shadow: 0 0 10px rgba(34, 197, 94, 0.8), 0 0 20px rgba(34, 197, 94, 0.4);
+    }
+    .neon-glow-blue {
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
+    }
+    .neon-border-blue {
+      border-color: rgba(6, 182, 212, 0.4);
+    }
+    .neon-text-blue {
+      text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 20px rgba(6, 182, 212, 0.4);
+    }
+    .neon-text-red {
+      text-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+    }
+    /* Custom Scrollbar for HUD Style */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #22c55e;
+    }
+    /* CRT Scanline Effect Overlay */
+    .crt-overlay {
+      position: relative;
+      overflow: hidden;
+    }
+    .crt-overlay::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      z-index: 20;
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+  <!-- HUD Header -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md px-6 py-4 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+      <!-- Title & Branding -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-green-500/10 border border-green-500/40 rounded-lg flex items-center justify-center animate-pulse">
+          <i data-lucide="shield-alert" class="w-6 h-6 text-green-400"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-black font-orbitron tracking-wider text-green-400 neon-text-green flex items-center gap-2">
+            EARTH DEFENSE SYSTEM <span class="text-xs bg-red-950/80 text-red-400 px-2 py-0.5 rounded border border-red-500/30 font-semibold animate-ping">LIVE</span>
+          </h1>
+          <p class="text-[10px] text-slate-500 font-orbitron uppercase tracking-widest">Alien Invasion Threat Analyzer v2.6</p>
+        </div>
+      </div>
+      
+      <!-- Audio & Signal Status Toggle -->
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full">
+          <div class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
+          <span class="text-xs text-slate-400 font-bold font-orbitron">SAT-SIGNAL: ONLINE</span>
+        </div>
+        <button id="sound-btn" onclick="toggleMute()" class="p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-green-500/50 rounded-xl text-slate-400 hover:text-green-400 transition flex items-center gap-2">
+          <i id="sound-icon" data-lucide="volume-2" class="w-5 h-5"></i>
+          <span class="text-xs font-bold font-orbitron hidden sm:inline">MUTE AUDIO</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Space -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+    
+    <!-- LEFT PANEL: Inputs & Diagnosis Reports (lg:col-span-5) -->
+    <section class="lg:col-span-5 flex flex-col gap-6 justify-between">
+      
+      <!-- Diagnosis Form Card -->
+      <div class="bg-slate-950/80 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex-1 flex flex-col justify-between">
+        <!-- Grid overlay aesthetic -->
+        <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"></div>
+        
+        <div>
+          <div class="flex items-center gap-2 border-b border-slate-800 pb-4 mb-6">
+            <i data-lucide="sliders" class="text-green-400 w-5 h-5"></i>
+            <h2 class="text-lg font-bold text-slate-200">생존 매개변수 설정</h2>
+          </div>
+
+          <!-- Parameter Fields -->
+          <div class="flex flex-col gap-5">
+            <!-- Parameter 1: Location -->
+            <div class="flex flex-col gap-2">
+              <label for="input-location" class="text-xs font-bold text-slate-400 flex items-center justify-between">
+                <span>01. 현재 내 대피 위치 (LOCATION)</span>
+                <span class="text-[10px] font-orbitron text-cyan-400">CORRECT VALUE</span>
+              </label>
+              <div class="relative">
+                <select id="input-location" onchange="updateLiveCodeView()" class="w-full bg-slate-900 border border-slate-800 focus:border-green-500 focus:ring-1 focus:ring-green-500/30 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none appearance-none transition">
+                  <option value="room" selected>🏠 이불 밖은 위험해! 내 방구석 (방구석 여포)</option>
+                  <option value="military">🛡️ 대한민국 안보의 핵심! 군부대 인근</option>
+                  <option value="mart">🛒 보급품 확보 최적지! 대형마트 지하창고</option>
+                  <option value="park">🌳 탈출하기엔 너무 넓은... 한강공원</option>
+                  <option value="subway">🚇 지하 4층 요새! 신도림역 승강장</option>
+                  <option value="convenience">🏪 24시간 삼각김밥의 성지! 편의점 매대 뒤</option>
+                  <option value="pc_cafe">🖥️ 초고속 5G 랜선 요새! 지하 PC방 구석</option>
+                  <option value="police">🚨 외계인도 법은 지키겠지? 동네 파출소 앞</option>
+                  <option value="mt_hallasan">🏔️ 고지대 전술 공기 수급! 한라산 백록담</option>
+                </select>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              </div>
+            </div>
+
+            <!-- Parameter 2: Weapon / Object -->
+            <div class="flex flex-col gap-2">
+              <label for="input-weapon" class="text-xs font-bold text-slate-400 flex items-center justify-between">
+                <span>02. 현재 손에 쥐고 있는 장비 (WEAPON)</span>
+                <span class="text-[10px] font-orbitron text-cyan-400">TACTICAL ITEM</span>
+              </label>
+              <div class="relative">
+                <select id="input-weapon" onchange="updateLiveCodeView()" class="w-full bg-slate-900 border border-slate-800 focus:border-green-500 focus:ring-1 focus:ring-green-500/30 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none appearance-none transition">
+                  <option value="smartphone" selected>📱 최후의 유튜브 브이로그용 [스마트폰]</option>
+                  <option value="umbrella">🌂 찌르기 및 방탄 겸용 [대형 우산]</option>
+                  <option value="tumbler">☕ 강철 타격 성능 탑재 [스텐 텀블러]</option>
+                  <option value="fist">✊ 나약하지만 가벼운 [맨주먹]</option>
+                  <option value="flyswatter">🏸 음속의 파괴 본능 [파리채]</option>
+                  <option value="keyboard">⌨️ 분노의 광클 타격기 [기계식 청축 키보드]</option>
+                  <option value="cardboard">📦 메탈기어 솔리드급 위장 [쿠팡 택배 박스]</option>
+                  <option value="selfie_stick">🤳 삼각대 겸용 초경량 삼봉 [알루미늄 셀카봉]</option>
+                  <option value="ramen_water">🍜 3분 대기 펄펄 끓는 [사발면 뜨거운 물]</option>
+                </select>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              </div>
+            </div>
+
+            <!-- Parameter 3: Agility -->
+            <div class="flex flex-col gap-3">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-slate-400">03. 나의 주관적 민첩성 지수 (AGILITY)</span>
+                <span id="agility-value" class="text-xs font-black font-orbitron text-green-400 bg-green-950/50 border border-green-500/30 px-2 py-0.5 rounded">LV. 3</span>
+              </div>
+              
+              <!-- Styled interactive agility grid selectors -->
+              <div class="grid grid-cols-5 gap-2" id="agility-grid">
+                <button type="button" onclick="selectAgility(1)" class="agility-btn py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 font-bold font-orbitron rounded-xl text-sm transition">1</button>
+                <button type="button" onclick="selectAgility(2)" class="agility-btn py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 font-bold font-orbitron rounded-xl text-sm transition">2</button>
+                <button type="button" onclick="selectAgility(3)" class="agility-btn py-2.5 bg-green-500 text-slate-950 border border-green-400 font-bold font-orbitron rounded-xl text-sm transition">3</button>
+                <button type="button" onclick="selectAgility(4)" class="agility-btn py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 font-bold font-orbitron rounded-xl text-sm transition">4</button>
+                <button type="button" onclick="selectAgility(5)" class="agility-btn py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 font-bold font-orbitron rounded-xl text-sm transition">5</button>
+              </div>
+              <p class="text-[10px] text-slate-500 leading-normal">
+                민첩성 지수가 낮을수록 외계인 공격 레이저를 피하기 어렵지만, 높을수록 신속하게 회피 후 생존 반격을 시작할 확률이 향상됩니다.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="mt-8">
+          <button id="btn-diagnose" onclick="startDiagnosis()" class="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-slate-950 font-black tracking-widest rounded-xl text-sm shadow-lg shadow-green-500/10 transition duration-300 transform active:scale-95 flex items-center justify-center gap-2">
+            <i data-lucide="activity" class="w-5 h-5"></i> 시뮬레이션 진단 개시
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-Time Survival Feedback Report Card -->
+      <div id="report-card" class="bg-slate-950/80 border border-slate-800 rounded-3xl p-6 relative overflow-hidden min-h-[220px] flex flex-col justify-between transition-all duration-500 opacity-60">
+        <!-- Grid overlay aesthetic -->
+        <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"></div>
+
+        <div>
+          <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+            <div class="flex items-center gap-2">
+              <i data-lucide="file-text" class="text-cyan-400 w-5 h-5"></i>
+              <h3 class="font-bold text-slate-200">종합 분석 서바이벌 리포트</h3>
+            </div>
+            <span id="report-status" class="text-[9px] font-bold font-orbitron bg-slate-900 border border-slate-800 text-slate-500 px-2 py-0.5 rounded">WAITING</span>
+          </div>
+
+          <div id="report-placeholder" class="py-6 text-center text-slate-500 flex flex-col items-center justify-center gap-2">
+            <i data-lucide="cpu" class="w-8 h-8 text-slate-700 animate-spin"></i>
+            <p class="text-xs">상단의 생존 매개변수를 지정한 뒤<br>'시뮬레이션 진단 개시'를 클릭하면 실시간 분석을 진행합니다.</p>
+          </div>
+
+          <!-- Real Dynamic Report Output -->
+          <div id="report-content" class="hidden flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-400">예측 생존 확률 등급</span>
+              <span id="survival-grade" class="text-sm font-black font-orbitron text-red-400 neon-text-red">등급 미정</span>
+            </div>
+            
+            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+              <h4 class="text-xs font-extrabold text-green-400 mb-1 flex items-center gap-1">
+                <i data-lucide="navigation-2" class="w-3.5 h-3.5"></i> 전투 및 전술 행동 지침
+              </h4>
+              <p id="survival-guideline" class="text-xs text-slate-300 leading-relaxed">
+                현재 매개변수 기준 분석 중...
+              </p>
+            </div>
+
+            <div class="bg-red-950/20 p-4 rounded-xl border border-red-900/30">
+              <h4 class="text-xs font-extrabold text-red-400 mb-1 flex items-center gap-1">
+                <i data-lucide="skull" class="w-3.5 h-3.5"></i> 정밀 취약성 진단 (사망 유발 요인)
+              </h4>
+              <p id="death-reason" class="text-xs text-slate-300 leading-relaxed">
+                현재 조합 기준 장비의 치명적인 문제 분석 중...
+              </p>
+            </div>
+
+            <div class="flex gap-2">
+              <div class="flex-1 bg-slate-900/40 border border-slate-800 p-2.5 rounded-xl text-center">
+                <p class="text-[9px] text-slate-500 font-bold uppercase">위치 위협지수</p>
+                <p id="stat-threat" class="text-xs font-black font-orbitron text-rose-400 mt-0.5">0%</p>
+              </div>
+              <div class="flex-1 bg-slate-900/40 border border-slate-800 p-2.5 rounded-xl text-center">
+                <p class="text-[9px] text-slate-500 font-bold uppercase">장비 방어력</p>
+                <p id="stat-defense" class="text-xs font-black font-orbitron text-cyan-400 mt-0.5">0%</p>
+              </div>
+              <div class="flex-1 bg-slate-900/40 border border-slate-800 p-2.5 rounded-xl text-center">
+                <p class="text-[9px] text-slate-500 font-bold uppercase">돌발 행동계수</p>
+                <p id="stat-reflex" class="text-xs font-black font-orbitron text-amber-400 mt-0.5">0%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-900 flex justify-between items-center text-[10px] text-slate-600">
+          <span class="font-orbitron">SYSTEM CORE ID: 489-G-Z</span>
+          <span>안심 정밀 시뮬레이터</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: 2D Canvas Display with Dual Tabs (Preview / Code) -->
+    <section class="lg:col-span-7 flex flex-col gap-4">
+      
+      <!-- Console Border Wrapper -->
+      <div class="bg-slate-950 border-2 border-slate-800 rounded-3xl p-4 flex-1 flex flex-col justify-between min-h-[450px] relative crt-overlay">
+        
+        <!-- Interactive Tabs Control (PREVIEW / CODE) -->
+        <div class="flex justify-between items-center mb-3 text-[10px] font-bold font-orbitron text-slate-400 px-1 border-b border-slate-900 pb-3">
+          <div class="flex items-center gap-1.5 text-green-400">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span>HUD SYSTEM VIEW</span>
+          </div>
+          
+          <!-- Tab Navigation Switcher Buttons -->
+          <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800 gap-1">
+            <button id="tab-preview-btn" onclick="switchHudTab('preview')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-100 bg-green-500/10 text-green-400 border border-green-500/30 transition">
+              <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
+              <span>PREVIEW (전술지도)</span>
+            </button>
+            <button id="tab-code-btn" onclick="switchHudTab('code')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-200 transition">
+              <i data-lucide="code-2" class="w-3.5 h-3.5"></i>
+              <span>CODE (연산코드)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 1) Tab Pane: PREVIEW DISPLAY (Canvas) -->
+        <div id="pane-preview" class="flex-1 min-h-[350px] lg:min-h-[400px] relative bg-[#010309] rounded-2xl overflow-hidden border border-slate-900 flex items-center justify-center">
+          <canvas id="defense-canvas" class="w-full h-full block absolute inset-0"></canvas>
+          
+          <!-- Tactical Overlay Beeps & Lights for immersion -->
+          <div class="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[#010309]/80 to-transparent pointer-events-none z-10"></div>
+          <div class="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#010309]/80 to-transparent pointer-events-none z-10"></div>
+          
+          <!-- Static floating interactive guide -->
+          <div id="canvas-hud-hint" class="absolute bottom-4 left-4 z-20 bg-slate-950/80 border border-slate-800/80 px-3 py-1.5 rounded-lg backdrop-blur text-[10px] leading-relaxed transition-all duration-500">
+            <span class="text-green-400 font-extrabold uppercase block mb-0.5">💡 전술 지도 조작 방법</span>
+            <span class="text-slate-400">지도를 터치하거나 마우스 클릭 시 해당 지점으로 <strong>생존 대공포가 격발</strong>됩니다.</span>
+          </div>
+
+          <!-- Large Screen Centered Scanning text -->
+          <div id="canvas-state-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 backdrop-blur-[2px] z-20 pointer-events-none transition-all duration-500">
+            <div class="text-center p-6 bg-slate-950/90 border border-slate-800 rounded-2xl max-w-xs flex flex-col items-center gap-3">
+              <div class="w-12 h-12 rounded-full border-2 border-dashed border-green-500 flex items-center justify-center animate-spin">
+                <i data-lucide="shield" class="w-6 h-6 text-green-400"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-sm text-slate-100 font-orbitron">SYSTEM READY</h4>
+                <p class="text-xs text-slate-500 mt-1">생존 진단을 개시하면 고정밀 시뮬레이션 전술 화면이 구동됩니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2) Tab Pane: CODE INTERPOLATOR DISPLAY (Hidden initially) -->
+        <div id="pane-code" class="hidden flex-1 min-h-[350px] lg:min-h-[400px] bg-[#020617] rounded-2xl p-5 border border-slate-900 overflow-y-auto font-mono text-xs text-green-400/90 leading-relaxed relative">
+          <!-- Terminal corner details -->
+          <div class="absolute top-3 right-4 text-[10px] text-slate-600 font-orbitron">INTERPOLATOR_RUNNING</div>
+          
+          <pre id="live-code-block" class="whitespace-pre-wrap select-all"></pre>
+        </div>
+
+        <!-- Tactical Canvas Foot Control buttons -->
+        <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-900">
+          <div class="flex items-center gap-4 text-xs">
+            <div class="flex items-center gap-1.5">
+              <div class="w-2.5 h-2.5 rounded bg-green-500"></div>
+              <span class="text-slate-400 font-bold">생존 확률: <span id="survival-percentage-hud" class="font-orbitron text-green-400">--%</span></span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <div class="w-2.5 h-2.5 rounded bg-cyan-500"></div>
+              <span class="text-slate-400 font-bold">탐지 위성: <span class="font-orbitron text-cyan-400">UFO-04</span></span>
+            </div>
+          </div>
+          
+          <button onclick="clearCanvasSimulation()" class="px-3 py-1.5 bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-400 hover:text-red-400 hover:border-red-500/30 rounded-lg transition flex items-center gap-1">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> 모니터 데이터 초기화
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Diagnostic Toast System Messages -->
+  <div id="diagnostic-toast-box" class="fixed bottom-6 right-6 z-40 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Footer -->
+  <footer class="bg-slate-950 border-t border-slate-900 py-6 px-6 text-center text-slate-500 text-xs mt-12">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 font-orbitron">
+      <p>© 2026 COGNITIVE DEFENSE INVASION FORCE LAB. ALL RIGHTS RESERVED.</p>
+      <div class="flex gap-4">
+        <span class="text-green-500/60 font-bold">EARTH RESCUE CODE: ALIEN-99</span>
+        <span class="text-slate-700">|</span>
+        <span class="text-cyan-500/60 font-bold">TACTICAL HUD EDITION</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // --- WEB AUDIO API SYNTHESIZER ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let isMuted = false;
+
+    function playSound(type) {
+      if (isMuted) return;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'beep') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        gainNode.gain.setValueAtTime(0.08, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } 
+      else if (type === 'laser') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1400, now);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.25);
+        gainNode.gain.setValueAtTime(0.06, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } 
+      else if (type === 'explosion') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.6);
+        gainNode.gain.setValueAtTime(0.3, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+        osc.start(now);
+        osc.stop(now + 0.7);
+        
+        const highOsc = audioCtx.createOscillator();
+        const highGain = audioCtx.createGain();
+        highOsc.type = 'sawtooth';
+        highOsc.connect(highGain);
+        highGain.connect(audioCtx.destination);
+        highOsc.frequency.setValueAtTime(80, now);
+        highOsc.frequency.exponentialRampToValueAtTime(200, now + 0.4);
+        highGain.gain.setValueAtTime(0.12, now);
+        highGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        highOsc.start(now);
+        highOsc.stop(now + 0.4);
+      } 
+      else if (type === 'warning') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.linearRampToValueAtTime(660, now + 0.15);
+        osc.frequency.linearRampToValueAtTime(440, now + 0.3);
+        gainNode.gain.setValueAtTime(0.08, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+      else if (type === 'success') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.08);
+        osc.frequency.setValueAtTime(783.99, now + 0.16);
+        osc.frequency.setValueAtTime(1046.50, now + 0.24);
+        gainNode.gain.setValueAtTime(0.08, now);
+        gainNode.gain.setValueAtTime(0.08, now + 0.24);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      const icon = document.getElementById('sound-icon');
+      const text = document.querySelector('#sound-btn span');
+      if (isMuted) {
+        icon.setAttribute('data-lucide', 'volume-x');
+        text.innerText = 'UNMUTE AUDIO';
+      } else {
+        icon.setAttribute('data-lucide', 'volume-2');
+        text.innerText = 'MUTE AUDIO';
+        playSound('beep');
+      }
+      lucide.createIcons();
+    }
+
+
+    // --- DUAL HUD TAB NAVIGATION SYSTEM ---
+    let activeHudTab = 'preview';
+
+    function switchHudTab(tab) {
+      playSound('beep');
+      activeHudTab = tab;
+
+      const previewBtn = document.getElementById('tab-preview-btn');
+      const codeBtn = document.getElementById('tab-code-btn');
+      const previewPane = document.getElementById('pane-preview');
+      const codePane = document.getElementById('pane-code');
+
+      if (tab === 'preview') {
+        // Active Preview styling
+        previewBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-100 bg-green-500/10 text-green-400 border border-green-500/30 transition";
+        codeBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-200 transition";
+        
+        previewPane.classList.remove('hidden');
+        codePane.classList.add('hidden');
+        
+        // Recalculate canvas size on pane restore
+        resizeCanvas();
+        drawInitialHUD();
+      } else if (tab === 'code') {
+        // Active Code styling
+        codeBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-100 bg-green-500/10 text-green-400 border border-green-500/30 transition";
+        previewBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-200 transition";
+        
+        previewPane.classList.add('hidden');
+        codePane.classList.remove('hidden');
+        
+        updateLiveCodeView();
+      }
+    }
+
+    // Dynamic Live Code Generator matching the User Selection states!
+    function updateLiveCodeView() {
+      const loc = document.getElementById('input-location').value;
+      const weapon = document.getElementById('input-weapon').value;
+      const agility = selectedAgilityLevel;
+
+      // Map value bonuses to show exact logic mathematical breakdown live
+      let locBonus = 0;
+      if (loc === 'military') locBonus = 25;
+      else if (loc === 'subway') locBonus = 18;
+      else if (loc === 'pc_cafe') locBonus = 15;
+      else if (loc === 'mart') locBonus = 12;
+      else if (loc === 'convenience') locBonus = 8;
+      else if (loc === 'police') locBonus = 6;
+      else if (loc === 'room') locBonus = 3;
+      else if (loc === 'mt_hallasan') locBonus = 2;
+      else if (loc === 'park') locBonus = -15;
+
+      let weaponBonus = 0;
+      if (weapon === 'umbrella') weaponBonus = 15;
+      else if (weapon === 'ramen_water') weaponBonus = 18;
+      else if (weapon === 'selfie_stick') weaponBonus = 13;
+      else if (weapon === 'tumbler') weaponBonus = 10;
+      else if (weapon === 'cardboard') weaponBonus = 12;
+      else if (weapon === 'keyboard') weaponBonus = 8;
+      else if (weapon === 'flyswatter') weaponBonus = 5;
+      else if (weapon === 'fist') weaponBonus = 2;
+      else if (weapon === 'smartphone') weaponBonus = -5;
+
+      const agilityBonus = (agility - 1) * 6;
+      const baseEstimate = 35 + locBonus + weaponBonus + agilityBonus;
+
+      const codeTemplate = `// ==========================================
+// 🛡️ EARTH DEFENSE SYSTEM - LIVE LOGIC CORE
+// ==========================================
+
+const CURRENT_SURVIVAL_STATE = {
+  location: "${loc}",
+  weapon: "${weapon}",
+  agility_level: ${agility},
+  active_threat: "ALIEN_MOTHERSHIPS"
+};
+
+/**
+ * 실시간 생존 계산 알고리즘 (Earth Rescue Equation)
+ * 사용자가 선택한 물리 매개변수를 역동적으로 계산합니다.
+ */
+function calculateSurvivalRate() {
+  let baseChance = 35; // 기본 생존 저항값
+  
+  // 1. 지형 가중치 점검 (Location Bonus)
+  const locBonus = ${locBonus}; 
+  baseChance += locBonus; // 선택 지점: ${loc}
+  
+  // 2. 장비 무기 계수 점검 (Weapon Defense)
+  const weaponBonus = ${weaponBonus};
+  baseChance += weaponBonus; // 무기 방어계수: ${weaponBonus}%
+  
+  // 3. 신체 민첩 보너스 산출 (Agility Factor)
+  const agilityBonus = (${agility} - 1) * 6;
+  baseChance += agilityBonus; // 민첩 지수: LV. ${agility} (Bonus: +${agilityBonus}%)
+  
+  // 4. 돌발 시뮬레이션 카오스 값 (Chaos Random offset)
+  // (-8% ~ +8% 난수 생성 및 오차 적용)
+  const deltaFactor = Math.floor(Math.random() * 16) - 8; 
+  
+  // 최종 확률 병합 및 한계치(Clamp 2% ~ 99%) 적용
+  const finalScore = Math.max(2, Math.min(99, baseChance + deltaFactor));
+  
+  return {
+    rawScore: baseChance,
+    finalScore: finalScore,
+    grade: evaluateGrade(finalScore)
+  };
+}
+
+// 계산 실행 및 전술 인터프리터 결과 출력
+const simulationResult = calculateSurvivalRate();
+
+console.log("------------------------------------------");
+console.log(">> 연산된 원시 안심 수치 : " + simulationResult.rawScore + "%");
+console.log(">> 카오스 오차 최종 수치 : " + ${survivalRate > 0 ? survivalRate : '`(진단 전)`'} + "%");
+console.log(">> 생존 임무 등급 판정   : " + "${document.getElementById('survival-grade')?.innerText || 'WAITING'}");
+console.log("------------------------------------------");
+
+/* 요격 전술 지침 실시간 로딩 */
+const guideline = "${document.getElementById('survival-guideline')?.innerText || '대기 중...'}";`;
+
+      document.getElementById('live-code-block').textContent = codeTemplate;
+    }
+
+
+    // --- GAME ENGINE & INTERACTIVE CANVAS TACTICAL HUD ---
+    const canvas = document.getElementById('defense-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let animationFrameId = null;
+    let canvasWidth = 0;
+    let canvasHeight = 0;
+
+    // Simulation states
+    let simulationPhase = 'idle'; // 'idle', 'scanning', 'combat', 'finished'
+    let survivalRate = 0; // calculated final survival rate
+    let displayedSurvivalRate = 0; // count-up survival rate visual value
+
+    // Tactical Radar Sweep details
+    let radarAngle = 0;
+    const radarSpeed = 0.025;
+    
+    // Animation asset lists
+    let particles = [];
+    let lasers = [];
+    let ufoFleet = [];
+    let defenseTurret = { x: 0, y: 0, angle: -Math.PI / 2 };
+
+    // Set responsive size for Canvas
+    function resizeCanvas() {
+      const container = canvas.parentElement;
+      canvasWidth = container.clientWidth;
+      canvasHeight = container.clientHeight;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      defenseTurret.x = canvasWidth / 2;
+      defenseTurret.y = canvasHeight - 20;
+    }
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      if (simulationPhase === 'idle' || simulationPhase === 'finished') {
+        drawInitialHUD();
+      }
+    });
+
+    // Handle mouse/touch interactive shots directly on tactical grid
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      
+      if (simulationPhase === 'combat' || simulationPhase === 'finished') {
+        fireDefensiveLaser(clickX, clickY);
+      } else {
+        createExplosion(clickX, clickY, '#22c55e', 12);
+        playSound('beep');
+      }
+    });
+
+    // Custom tactical coordinate tracking on mouse move
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = Math.round(e.clientX - rect.left);
+      const mouseY = Math.round(e.clientY - rect.top);
+      document.getElementById('tactical-coordinate').innerText = `GRID: X-${mouseX} // Y-${mouseY} // TARGETING`;
+    });
+
+    // Agility Grid Selection state handler
+    let selectedAgilityLevel = 3;
+    function selectAgility(level) {
+      selectedAgilityLevel = level;
+      
+      document.querySelectorAll('.agility-btn').forEach((btn, idx) => {
+        if (idx + 1 === level) {
+          btn.className = "agility-btn py-2.5 bg-green-500 text-slate-950 border border-green-400 font-bold font-orbitron rounded-xl text-sm transition";
+        } else {
+          btn.className = "agility-btn py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 font-bold font-orbitron rounded-xl text-sm transition";
+        }
+      });
+
+      document.getElementById('agility-value').innerText = `LV. ${level}`;
+      playSound('beep');
+      updateLiveCodeView();
+    }
+
+    // Class Definitions for Simulation Sprites
+    class Particle {
+      constructor(x, y, color, speedScale = 1) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = Math.random() * 2 + 1;
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = Math.random() * 4 + 1.5;
+        this.vx = Math.cos(angle) * velocity * speedScale;
+        this.vy = Math.sin(angle) * velocity * speedScale;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.02 + 0.015;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= this.decay;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = this.color;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    class Laser {
+      constructor(startX, startY, targetX, targetY, color, type = 'player') {
+        this.x = startX;
+        this.y = startY;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.color = color;
+        this.type = type;
+        this.progress = 0;
+        this.speed = type === 'player' ? 0.08 : 0.04;
+      }
+
+      update() {
+        this.progress += this.speed;
+        if (this.progress >= 1) {
+          createExplosion(this.targetX, this.targetY, this.color, this.type === 'player' ? 18 : 8);
+          playSound(this.type === 'player' ? 'explosion' : 'warning');
+          return true;
+        }
+        return false;
+      }
+
+      draw() {
+        const currentX = this.x + (this.targetX - this.x) * this.progress;
+        const currentY = this.y + (this.targetY - this.y) * this.progress;
+
+        ctx.save();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.type === 'player' ? 3 : 1.5;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+        ctx.beginPath();
+        
+        const tailX = this.x + (this.targetX - this.x) * Math.max(0, this.progress - 0.25);
+        const tailY = this.y + (this.targetY - this.y) * Math.max(0, this.progress - 0.25);
+        ctx.moveTo(tailX, tailY);
+        ctx.lineTo(currentX, currentY);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    class AlienUFO {
+      constructor(x, y, speed, color) {
+        this.x = x;
+        this.y = y;
+        this.speed = speed;
+        this.color = color;
+        this.radius = Math.random() * 8 + 12;
+        this.pulse = 0;
+        this.shootTimer = Math.random() * 100 + 50;
+      }
+
+      update() {
+        this.pulse += 0.05;
+        this.x += Math.sin(this.pulse) * 1.5;
+        this.y += this.speed;
+
+        this.shootTimer--;
+        if (this.shootTimer <= 0 && simulationPhase === 'combat') {
+          const laserTargetX = canvasWidth / 2 + (Math.random() * 200 - 100);
+          lasers.push(new Laser(this.x, this.y, laserTargetX, canvasHeight - 20, '#ef4444', 'alien'));
+          this.shootTimer = Math.random() * 120 + 80;
+        }
+
+        return this.y > canvasHeight - 40;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.color;
+        
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y, this.radius, this.radius / 2.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - this.radius / 4, this.radius / 2, Math.PI, 0);
+        ctx.fill();
+
+        const blinkCount = 3;
+        for (let i = 0; i < blinkCount; i++) {
+          const offsetX = (i - 1) * (this.radius * 0.6);
+          const glowIntensity = Math.abs(Math.sin(this.pulse + i));
+          ctx.globalAlpha = glowIntensity;
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(this.x + offsetX, this.y + this.radius / 12, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function createExplosion(x, y, color, particleCount = 15) {
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle(x, y, color));
+      }
+    }
+
+    function fireDefensiveLaser(targetX, targetY) {
+      playSound('laser');
+      defenseTurret.angle = Math.atan2(targetY - defenseTurret.y, targetX - defenseTurret.x);
+      lasers.push(new Laser(defenseTurret.x, defenseTurret.y, targetX, targetY, '#22d3ee', 'player'));
+    }
+
+    function spawnUFOWave() {
+      ufoFleet = [];
+      const count = Math.floor(Math.random() * 3) + 4;
+      for (let i = 0; i < count; i++) {
+        const sectorX = (canvasWidth / (count + 1)) * (i + 1) + (Math.random() * 40 - 20);
+        const yCoord = -30 - (i * 45);
+        ufoFleet.push(new AlienUFO(sectorX, yCoord, Math.random() * 0.8 + 0.4, '#a855f7'));
+      }
+    }
+
+    function drawInitialHUD() {
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+      
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 0.5;
+      const gridSize = 40;
+      for (let x = 0; x < canvasWidth; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvasHeight);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvasHeight; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvasWidth, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(canvasWidth / 2, canvasHeight / 2, 120, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(canvasWidth / 2, canvasHeight / 2, 220, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(34, 197, 94, 0.3)';
+      ctx.lineWidth = 2;
+      const size = 15;
+      
+      ctx.beginPath();
+      ctx.moveTo(10, 10 + size); ctx.lineTo(10, 10); ctx.lineTo(10 + size, 10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(canvasWidth - 10, 10 + size); ctx.lineTo(canvasWidth - 10, 10); ctx.lineTo(canvasWidth - 10 - size, 10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(10, canvasHeight - 10 - size); ctx.lineTo(10, canvasHeight - 10); ctx.lineTo(10 + size, canvasHeight - 10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(canvasWidth - 10, canvasHeight - 10 - size); ctx.lineTo(canvasWidth - 10, canvasHeight - 10); ctx.lineTo(canvasWidth - 10 - size, canvasHeight - 10);
+      ctx.stroke();
+    }
+
+    // --- MAIN RENDER AND SIMULATION PROCESS LOOP ---
+    let frameCount = 0;
+    let phaseTimer = 0;
+
+    function drawSimulationLoop() {
+      // Avoid rendering when Preview tab is completely hidden
+      if (activeHudTab === 'preview') {
+        drawInitialHUD();
+      }
+      frameCount++;
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        if (activeHudTab === 'preview') {
+          particles[i].draw();
+        }
+        if (particles[i].alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+
+      for (let i = lasers.length - 1; i >= 0; i--) {
+        const finished = lasers[i].update();
+        if (activeHudTab === 'preview') {
+          lasers[i].draw();
+        }
+        if (finished) {
+          lasers.splice(i, 1);
+        }
+      }
+
+      // Draw Turret Base Stand
+      if (activeHudTab === 'preview') {
+        ctx.save();
+        ctx.translate(defenseTurret.x, defenseTurret.y);
+        ctx.rotate(defenseTurret.angle);
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#22d3ee';
+        ctx.strokeStyle = '#22d3ee';
+        ctx.fillStyle = '#0f172a';
+        ctx.lineWidth = 2.5;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, Math.PI, 0);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.rect(-4, -28, 8, 16);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (simulationPhase === 'scanning') {
+        phaseTimer++;
+        
+        radarAngle += radarSpeed;
+        if (activeHudTab === 'preview') {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(34, 197, 94, 0.4)';
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = 'rgba(34, 197, 94, 0.5)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(canvasWidth / 2, canvasHeight / 2);
+          ctx.lineTo(
+            canvasWidth / 2 + Math.cos(radarAngle) * 350,
+            canvasHeight / 2 + Math.sin(radarAngle) * 350
+          );
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.fillStyle = '#22c55e';
+          ctx.font = 'bold 12px Orbitron';
+          ctx.fillText("SCANNING THREAT VECTORS...", canvasWidth / 2 - 100, canvasHeight / 2 - 40);
+          ctx.fillText(`SAT DATA CAPTURING: ${Math.floor((phaseTimer / 120) * 100)}%`, canvasWidth / 2 - 100, canvasHeight / 2 - 20);
+        }
+
+        if (phaseTimer >= 120) {
+          simulationPhase = 'combat';
+          phaseTimer = 0;
+          spawnUFOWave();
+          showNotification('⚠️ 외계 우주선 무리 유입 감지! 요격 시뮬레이션을 시작합니다.', 'warning');
+        }
+      } 
+      else if (simulationPhase === 'combat') {
+        phaseTimer++;
+
+        for (let i = ufoFleet.length - 1; i >= 0; i--) {
+          const reachedBase = ufoFleet[i].update();
+          if (activeHudTab === 'preview') {
+            ufoFleet[i].draw();
+          }
+          
+          if (reachedBase) {
+            createExplosion(ufoFleet[i].x, canvasHeight - 30, '#ef4444', 30);
+            playSound('explosion');
+            ufoFleet.splice(i, 1);
+          }
+        }
+
+        if (frameCount % 45 === 0 && ufoFleet.length > 0) {
+          const targetUFO = ufoFleet[Math.floor(Math.random() * ufoFleet.length)];
+          fireDefensiveLaser(targetUFO.x, targetUFO.y);
+          
+          setTimeout(() => {
+            const index = ufoFleet.indexOf(targetUFO);
+            if (index !== -1 && Math.random() > 0.4) {
+              createExplosion(targetUFO.x, targetUFO.y, '#a855f7', 25);
+              ufoFleet.splice(index, 1);
+            }
+          }, 400);
+        }
+
+        if (activeHudTab === 'preview') {
+          ctx.fillStyle = '#ef4444';
+          ctx.font = 'bold 10px Orbitron';
+          ctx.fillText(`UFO ENEMIES ALIVE: ${ufoFleet.length}`, 25, 35);
+          ctx.fillStyle = '#22d3ee';
+          ctx.fillText(`DEFENSE RADAR SYSTEM: AUTOMATIC-SHOOT`, 25, 50);
+        }
+
+        if (phaseTimer >= 220 || ufoFleet.length === 0) {
+          simulationPhase = 'finished';
+          phaseTimer = 0;
+          displayAnalysisReport();
+        }
+      } 
+      else if (simulationPhase === 'finished') {
+        if (displayedSurvivalRate < survivalRate) {
+          displayedSurvivalRate += 1;
+        } else if (displayedSurvivalRate > survivalRate) {
+          displayedSurvivalRate -= 1;
+        }
+
+        if (activeHudTab === 'preview') {
+          const centerX = canvasWidth / 2;
+          const centerY = canvasHeight / 2;
+          const radius = 80;
+
+          ctx.save();
+          ctx.strokeStyle = '#111827';
+          ctx.lineWidth = 14;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          ctx.stroke();
+
+          const scoreRatio = displayedSurvivalRate / 100;
+          const arcColor = displayedSurvivalRate > 50 ? '#22c55e' : '#ef4444';
+          ctx.strokeStyle = arcColor;
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = arcColor;
+          ctx.lineWidth = 10;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, -Math.PI / 2, (-Math.PI / 2) + (Math.PI * 2 * scoreRatio));
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 36px Orbitron';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${displayedSurvivalRate}%`, centerX, centerY - 5);
+          
+          ctx.font = 'bold 10px Orbitron';
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillText("SURVIVAL RATE", centerX, centerY + 25);
+          ctx.restore();
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(drawSimulationLoop);
+    }
+
+    // --- FORM SIMULATION INTEGRATION LOGIC ---
+
+    function startDiagnosis() {
+      playSound('beep');
+
+      const loc = document.getElementById('input-location').value;
+      const weapon = document.getElementById('input-weapon').value;
+      
+      const card = document.getElementById('report-card');
+      card.classList.remove('opacity-60');
+      card.classList.add('opacity-100');
+
+      document.getElementById('report-placeholder').classList.add('hidden');
+      document.getElementById('report-content').classList.remove('hidden');
+      document.getElementById('report-status').innerText = 'CALCULATING';
+      document.getElementById('report-status').className = 'text-[9px] font-bold font-orbitron bg-amber-950 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded animate-pulse';
+
+      document.getElementById('canvas-state-overlay').classList.add('opacity-0', 'pointer-events-none');
+      
+      let baseChance = 35;
+      let locThreat = 50;
+      let weaponDef = 20;
+      let randomFactor = Math.floor(Math.random() * 16) - 8;
+
+      if (loc === 'military') { baseChance += 25; locThreat = 20; }
+      else if (loc === 'subway') { baseChance += 18; locThreat = 35; }
+      else if (loc === 'pc_cafe') { baseChance += 15; locThreat = 40; }
+      else if (loc === 'mart') { baseChance += 12; locThreat = 45; }
+      else if (loc === 'convenience') { baseChance += 8; locThreat = 55; }
+      else if (loc === 'police') { baseChance += 6; locThreat = 60; }
+      else if (loc === 'room') { baseChance += 3; locThreat = 65; }
+      else if (loc === 'mt_hallasan') { baseChance += 2; locThreat = 75; }
+      else if (loc === 'park') { baseChance -= 15; locThreat = 90; }
+
+      if (weapon === 'umbrella') { baseChance += 15; weaponDef = 60; }
+      else if (weapon === 'ramen_water') { baseChance += 18; weaponDef = 55; }
+      else if (weapon === 'selfie_stick') { baseChance += 13; weaponDef = 50; }
+      else if (weapon === 'tumbler') { baseChance += 10; weaponDef = 45; }
+      else if (weapon === 'cardboard') { baseChance += 12; weaponDef = 40; }
+      else if (weapon === 'keyboard') { baseChance += 8; weaponDef = 35; }
+      else if (weapon === 'flyswatter') { baseChance += 5; weaponDef = 30; }
+      else if (weapon === 'fist') { baseChance += 2; weaponDef = 15; }
+      else if (weapon === 'smartphone') { baseChance -= 5; weaponDef = 5; }
+
+      const agilityBonus = (selectedAgilityLevel - 1) * 6;
+      baseChance += agilityBonus;
+
+      survivalRate = Math.max(2, Math.min(99, baseChance + randomFactor));
+      displayedSurvivalRate = 0;
+
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      simulationPhase = 'scanning';
+      phaseTimer = 0;
+      lasers = [];
+      particles = [];
+      ufoFleet = [];
+      
+      resizeCanvas();
+      drawSimulationLoop();
+
+      showNotification('📡 광역 레이저 전술 위성 전력 승압 완료!', 'success');
+      
+      // Sync code view
+      updateLiveCodeView();
+    }
+
+    const LOCATION_GUIDELINES = {
+      'room': "즉시 방의 모든 전등을 끄고 암막 커튼을 치십시오. 이불을 전신 스텔스 카모플라주 방어막 삼아 완전 침묵을 유지하십시오.",
+      'military': "인근 군부대의 철조망 방어 펜스 뒤로 즉각 기어들어 가십시오. 장갑차 엄폐물 후방에서 공중 폭격을 회피하는 것이 상책입니다.",
+      'mart': "지하 식품 저장소의 통조림 적재 구역 안쪽으로 숨으십시오. 장기전에 대비한 보급 물자를 챙기고 기둥 뒤를 점유하십시오.",
+      'subway': "신도림역 지하 4층 대피 배관망실 깊숙이 진입하십시오. 지상의 플라즈마 궤도 폭격으로부터 완벽한 콘크리트 보호막을 얻습니다.",
+      'convenience': "삼각김밥 적재 냉장실 뒤쪽 환풍 통로로 도망쳐 잠복하십시오. 유통기한이 넉넉한 비상식량을 신속하게 약탈해 숨겨야 합니다.",
+      'pc_cafe': "화려한 RGB 키보드 광선과 모니터 전원을 즉각 차단하십시오. 지하 컴퓨터 본체 수납함 밑 빈 틈새 공간을 엄폐 지점으로 선점하십시오.",
+      'police': "경찰서 캐비닛 안쪽에 신속히 몸을 욱여넣으십시오. 무기고에 남겨진 진압용 헬멧 및 잔존 방패가 있는지 전술 파밍을 하십시오.",
+      'mt_hallasan': "고지대 수색용 외계 무인정찰기(드론)에 잡히지 않도록, 백록담 바위 균열 동굴 틈새로 포복해 들어가 무전 통신을 끄십시오.",
+      'park': "엄폐물이 전무한 평지 개활지는 자살 행위입니다! 즉시 인근 한강 대교 교각 콘크리트 받침대 아래나 우수관 속으로 포복 탈출하십시오."
+    };
+
+    const WEAPON_DEATH_REASONS = {
+      'smartphone': "외계 침공 드론의 고주파 신호 역추적 시스템으로 인해, '지구 멸망 실시간 생방송 유튜브 브이로그'가 켜지는 즉시 전술 저격을 맞아 폭사함.",
+      'umbrella': "레이저 광선을 비막이용 대형 우산으로 팅겨보려 했으나, 플라즈마 레이저의 무시무시한 고열에 우산살과 함께 1초 만에 웰던으로 녹아내려 소멸함.",
+      'tumbler': "스텐 텀블러로 돌진하는 외계 괴수의 은백색 외갑판을 가격했으나, 맑고 고운 쇳소리만 내며 튕겨나갔고 괴수의 격노를 유발하여 갈갈이 찢김.",
+      'fist': "생물학적 탄소 기반의 나약한 맨주먹 펀치를 날렸으나 외계인의 티타늄 슈트 표면에 가벼운 흠집조차 내지 못하고 손가락뼈가 전부 으스러진 후 역공당함.",
+      'flyswatter': "UFO 파견 드론을 음속의 파리채 스윙으로 요격하려 시도했으나, 드론의 강력한 전자파 실드 가동으로 발생한 정전기 충격에 심장마비로 쓰러짐.",
+      'keyboard': "현란한 청축 기계식 타이핑 소음으로 외계인의 주의를 끌려다가, 청각 센서가 고도로 발달한 외계 정찰병에게 등 뒤의 위치가 발각되어 꼬챙이가 됨.",
+      'cardboard': "택배 상자로 숨어 조용히 지나가기를 바랐으나, 파괴된 도로 수거를 진행하던 외계 분리수거 로봇에 의해 '재활용 대상'으로 인식되어 압축 폐기됨.",
+      'selfie_stick': "알루미늄 셀카봉을 3단 분리 전술봉처럼 찌르고 휘둘렀으나, 단숨에 반으로 꺾이며 마지막 최후의 셀카 영정사진 한 장만 클라우드에 올린 채 승천함.",
+      'ramen_water': "컵라면의 끓는 온수를 외계인의 페이스 실드에 뿌렸으나 외계 슈트의 무중력 발수 정화막 덕분에 간지러움만 느꼈고, 곧바로 분노의 우주 분쇄기에 갈림."
+    };
+
+    function displayAnalysisReport() {
+      playSound(survivalRate >= 50 ? 'success' : 'warning');
+
+      document.getElementById('report-status').innerText = 'COMPLETED';
+      document.getElementById('report-status').className = 'text-[9px] font-bold font-orbitron bg-green-950 text-green-400 border border-green-500/30 px-2 py-0.5 rounded';
+      document.getElementById('survival-percentage-hud').innerText = `${survivalRate}%`;
+
+      const gradeSpan = document.getElementById('survival-grade');
+      const textSpan = document.getElementById('survival-guideline');
+      const deathReasonSpan = document.getElementById('death-reason');
+      
+      const locationVal = document.getElementById('input-location').value;
+      const weaponVal = document.getElementById('input-weapon').value;
+
+      textSpan.innerHTML = LOCATION_GUIDELINES[locationVal] || "대피 지역이 차단되었습니다! 즉시 안전 구역을 확보하십시오.";
+      deathReasonSpan.innerHTML = WEAPON_DEATH_REASONS[weaponVal] || "치명적인 장비 부재로 인해 예상치 못한 위험에 즉시 노출됩니다.";
+
+      let threat = 50;
+      let defense = 20;
+      
+      if (locationVal === 'military') threat = 15;
+      else if (locationVal === 'subway') threat = 30;
+      else if (locationVal === 'pc_cafe') threat = 40;
+      else if (locationVal === 'mart') threat = 45;
+      else if (locationVal === 'convenience') threat = 55;
+      else if (locationVal === 'police') threat = 60;
+      else if (locationVal === 'room') threat = 65;
+      else if (locationVal === 'mt_hallasan') threat = 75;
+      else if (locationVal === 'park') threat = 85;
+
+      if (weaponVal === 'umbrella') defense = 75;
+      else if (weaponVal === 'ramen_water') defense = 65;
+      else if (weaponVal === 'selfie_stick') defense = 55;
+      else if (weaponVal === 'tumbler') defense = 45;
+      else if (weaponVal === 'cardboard') defense = 35;
+      else if (weaponVal === 'keyboard') defense = 25;
+      else if (weaponVal === 'flyswatter') defense = 20;
+      else if (weaponVal === 'fist') defense = 15;
+      else if (weaponVal === 'smartphone') defense = 5;
+
+      document.getElementById('stat-threat').innerText = `${threat}%`;
+      document.getElementById('stat-defense').innerText = `${defense}%`;
+      document.getElementById('stat-reflex').innerText = `${selectedAgilityLevel * 20}%`;
+
+      if (survivalRate >= 80) {
+        gradeSpan.innerText = 'S급: 지구방위대 연합사령관';
+        gradeSpan.className = 'text-sm font-black font-orbitron text-green-400 neon-text-green';
+      } 
+      else if (survivalRate >= 55) {
+        gradeSpan.innerText = 'A급: 외계 소탕 게릴라 전사';
+        gradeSpan.className = 'text-sm font-black font-orbitron text-cyan-400 neon-text-blue';
+      }
+      else if (survivalRate >= 30) {
+        gradeSpan.innerText = 'B급: 은둔형 생명 유지 장치';
+        gradeSpan.className = 'text-sm font-black font-orbitron text-amber-400';
+      }
+      else {
+        gradeSpan.innerText = 'F급: 외계 영양 비료 예정자';
+        gradeSpan.className = 'text-sm font-black font-orbitron text-red-500 neon-text-red';
+      }
+
+      showNotification('📝 가상 생존 종합 보고 분석이 종료되었습니다.', 'success');
+      
+      // Sync code tab state live update
+      updateLiveCodeView();
+    }
+
+    function clearCanvasSimulation() {
+      playSound('beep');
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      simulationPhase = 'idle';
+      survivalRate = 0;
+      displayedSurvivalRate = 0;
+      particles = [];
+      lasers = [];
+      ufoFleet = [];
+      
+      document.getElementById('survival-percentage-hud').innerText = '--%';
+      document.getElementById('canvas-state-overlay').classList.remove('opacity-0', 'pointer-events-none');
+      
+      document.getElementById('report-placeholder').classList.remove('hidden');
+      document.getElementById('report-content').classList.add('hidden');
+      document.getElementById('report-status').innerText = 'WAITING';
+      document.getElementById('report-status').className = 'text-[9px] font-bold font-orbitron bg-slate-900 border border-slate-800 text-slate-500 px-2 py-0.5 rounded';
+
+      const card = document.getElementById('report-card');
+      card.classList.add('opacity-60');
+      card.classList.remove('opacity-100');
+
+      resizeCanvas();
+      drawInitialHUD();
+      updateLiveCodeView();
+    }
+
+    function showNotification(message, type = 'success') {
+      const box = document.getElementById('diagnostic-toast-box');
+      const toast = document.createElement('div');
+      
+      let badgeStyle = type === 'success' ? 'bg-green-500 text-slate-950' : 'bg-red-500 text-slate-100 animate-pulse';
+      let icon = type === 'success' ? 'activity' : 'zap-off';
+
+      toast.className = "flex items-center gap-2.5 bg-slate-950/95 border border-slate-800 p-3.5 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 max-w-xs pointer-events-auto";
+      toast.innerHTML = `
+        <div class="w-6 h-6 rounded-lg ${badgeStyle} flex items-center justify-center">
+          <i data-lucide="${icon}" class="w-3.5 h-3.5"></i>
+        </div>
+        <div class="flex-1 text-[11px] font-bold text-slate-100 leading-normal">${message}</div>
+      `;
+
+      box.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.className = "flex items-center gap-2.5 bg-slate-950/95 border border-slate-800 p-3.5 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-0 opacity-100 max-w-xs pointer-events-auto";
+      }, 50);
+
+      setTimeout(() => {
+        toast.className = "flex items-center gap-2.5 bg-slate-950/95 border border-slate-800 p-3.5 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 max-w-xs pointer-events-auto";
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    function initSimulationApp() {
+      lucide.createIcons();
+      resizeCanvas();
+      drawInitialHUD();
+      updateLiveCodeView();
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      setTimeout(initSimulationApp, 1);
+    } else {
+      document.addEventListener('DOMContentLoaded', initSimulationApp);
+    }
+    window.addEventListener('load', initSimulationApp);
+  </script>
+</body>
+</html>
